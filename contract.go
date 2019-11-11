@@ -26,7 +26,7 @@ type Contract struct {
 // BalanceOf returns the current number of NFTs owned by owner.
 func (c *Contract) BalanceOf(owner string) uint64 {
 	if c.OwnedTokens == nil {
-		return 0
+		c.OwnedTokens = make(map[string][]string)
 	}
 	return uint64(len(c.OwnedTokens[owner]))
 }
@@ -36,7 +36,7 @@ func (c *Contract) BalanceOf(owner string) uint64 {
 // argument will be false.
 func (c *Contract) OwnerOf(tokenID *big.Int) (string, bool) {
 	if c.TokenOwners == nil {
-		return "", false
+		c.TokenOwners = make(map[string]string)
 	}
 	owner, ok := c.TokenOwners[tokenID.String()]
 	return owner, ok
@@ -44,29 +44,9 @@ func (c *Contract) OwnerOf(tokenID *big.Int) (string, bool) {
 
 // Transfer transfers the token with the given id from the "from" address to the "to" address.
 func (c *Contract) Transfer(from, to string, tokenID *big.Int) {
-	if c.OwnedTokens == nil || c.OwnedTokenIndex == nil || c.TokenOwners == nil {
-		return
-	}
-	tokenIndex, ok := c.OwnedTokenIndex[tokenID.String()]
-	if !ok {
-		return
-	}
-	totalTokens, ok := BigIntString(c.TotalTokens)
-	if !ok {
-		return
-	}
 	tid := tokenID.String()
-	// remove token from "from" address
-	delete(c.TokenOwners, tid)
-	c.OwnedTokens[from] = append(c.OwnedTokens[from][:tokenIndex], c.OwnedTokens[from][tokenIndex+1:]...)
-	delete(c.OwnedTokenIndex, tid)
-
-	// add token to "to" address
-	c.TokenOwners[tid] = to
-	balance := c.BalanceOf(to)
-	c.OwnedTokens[to] = append(c.OwnedTokens[to], tid)
-	c.OwnedTokenIndex[tid] = balance
-	c.TotalTokens = totalTokens.Add(totalTokens, bigOne).String()
+	c.removeToken(from, tid)
+	c.addToken(to, tid)
 }
 
 // TotalSupply returns the current known supply of the token. This supply is updated
@@ -83,7 +63,7 @@ func (c *Contract) TotalSupply() *big.Int {
 // argument will be false.
 func (c *Contract) TokenOfOwnerByIndex(owner string, idx uint64) (*big.Int, bool) {
 	if c.OwnedTokens == nil {
-		return nil, false
+		c.OwnedTokens = make(map[string][]string)
 	}
 	if tokens, ok := c.OwnedTokens[owner]; ok {
 		if idx < uint64(len(tokens)) {
@@ -106,10 +86,56 @@ func (c *Contract) MetadataFor(tokenID *big.Int) map[string]interface{} {
 	return meta
 }
 
+func (c *Contract) removeToken(from, tid string) {
+	if c.OwnedTokenIndex == nil {
+		c.OwnedTokenIndex = make(map[string]uint64)
+	}
+	if c.TokenOwners == nil {
+		c.TokenOwners = make(map[string]string)
+	}
+	if c.OwnedTokens == nil {
+		c.OwnedTokens = make(map[string][]string)
+	}
+	totalTokens, ok := BigIntString(c.TotalTokens)
+	if !ok {
+		return
+	}
+	if tokenIndex, ok := c.OwnedTokenIndex[tid]; ok {
+		// remove token from "from" address
+		delete(c.TokenOwners, tid)
+		c.OwnedTokens[from] = append(c.OwnedTokens[from][:tokenIndex], c.OwnedTokens[from][tokenIndex+1:]...)
+		delete(c.OwnedTokenIndex, tid)
+		c.TotalTokens = totalTokens.Sub(totalTokens, bigOne).String()
+	}
+}
+
+func (c *Contract) addToken(to, tid string) {
+	if c.TokenOwners == nil {
+		c.TokenOwners = make(map[string]string)
+	}
+	if c.OwnedTokens == nil {
+		c.OwnedTokens = make(map[string][]string)
+	}
+	if c.OwnedTokenIndex == nil {
+		c.OwnedTokenIndex = make(map[string]uint64)
+	}
+	if totalTokens, ok := BigIntString(c.TotalTokens); ok {
+		// add token to "to" address
+		c.TokenOwners[tid] = to
+		balance := c.BalanceOf(to)
+		c.OwnedTokens[to] = append(c.OwnedTokens[to], tid)
+		c.OwnedTokenIndex[tid] = balance
+		c.TotalTokens = totalTokens.Add(totalTokens, bigOne).String()
+	}
+}
+
 // BigIntString is a convenience function for creating a big.Int from string. The string is assumed to be
 // a base 10 number. If the big.Int could not be created from the provided string, the second boolean return
 // argument will be false.
 func BigIntString(s string) (*big.Int, bool) {
+	if s == "" {
+		s = "0"
+	}
 	bi := &big.Int{}
 	bi, ok := bi.SetString(s, 10)
 	return bi, ok
