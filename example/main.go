@@ -1,15 +1,12 @@
 package main
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
-	"io/ioutil"
+	"github.com/dragonchain/dragonchain-sdk-go"
 	"net/http"
 	"nft"
+	dcheap "nft/dragonchain"
 	"os"
-
-	"github.com/dragonchain/dragonchain-sdk-go"
 )
 
 var (
@@ -21,45 +18,38 @@ var (
 )
 
 func main() {
-	contract := &nft.Contract{}
-	b, err := heap()
+	dcClient, err := dragonClient()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to get heap: %s", err)
+		fmt.Fprintf(os.Stderr, "failed to create dragonchain client: %s\n", err)
 		os.Exit(1)
 	}
-	if err := json.Unmarshal(b, contract); err != nil {
-		fmt.Fprintf(os.Stderr, "failed to JSON unmarshal heap: %s", err)
-		os.Exit(1)
+	rt := &nft.Runtime{
+		HeapFetcher: &dcheap.HeapFetcher{
+			Client: dcClient,
+		},
+		ContractFactory: &nft.DefaultContractFactory{},
+		RPCHandler:      &rpcHandler{},
 	}
-	rpc, err := ioutil.ReadAll(os.Stdin)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to read STDIN: %s", err)
-		os.Exit(1)
-	}
-	handleRPC(rpc, contract)
-	if err := json.NewEncoder(os.Stdout).Encode(contract); err != nil {
-		fmt.Fprintf(os.Stderr, "failed to JSON encode contract state to stdout: %s", err)
-		os.Exit(1)
-	}
+	rt.Run()
 }
 
-func handleRPC(rpc []byte, contract *nft.Contract) {
+func handleRPC(rpc []byte, contract nft.Contract) {
 	// interpret RPC and handle with contract.
 }
 
-func heap() ([]byte, error) {
+func dragonClient() (*dragonchain.Client, error) {
 	httpClient := &http.Client{}
 	creds, err := dragonchain.NewCredentials(dcID, apiKey, apiKeyID, dragonchain.HashSHA256)
 	if err != nil {
 		return nil, err
 	}
 	client := dragonchain.NewClient(creds, baseAPIURL, httpClient)
-	resp, err := client.GetSmartContractObject("", "")
-	if err != nil {
-		return nil, err
-	}
-	if !resp.OK {
-		return nil, errors.New("Non OK response")
-	}
-	return resp.Response.([]byte), nil
+	return client, nil
+}
+
+type rpcHandler struct {
+}
+
+func (h *rpcHandler) HandleRPC(rpc []byte, contract nft.Contract) ([]byte, error) {
+	return []byte{}, nil
 }
