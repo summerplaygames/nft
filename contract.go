@@ -7,8 +7,9 @@ import (
 var (
 	// BigZero is a math/big.Int with a value of 0.
 	BigZero = big.NewInt(0)
-
-	bigOne = big.NewInt(1)
+	// BigNegOne is a math/big.In with a value of -1.
+	BigNegOne = big.NewInt(-1)
+	bigOne    = big.NewInt(1)
 )
 
 // Contract is an NFT smart contract implementation that is designed to work with
@@ -42,6 +43,14 @@ func (c *Contract) OwnerOf(tokenID *big.Int) (string, bool) {
 	return owner, ok
 }
 
+// Mint mints a new token and assigns it to the "to" address.
+func (c *Contract) Mint(to string) {
+	total := c.TotalSupply()
+	if total != BigNegOne {
+		c.addToken(to, total.Add(total, bigOne).String())
+	}
+}
+
 // Transfer transfers the token with the given id from the "from" address to the "to" address.
 func (c *Contract) Transfer(from, to string, tokenID *big.Int) {
 	tid := tokenID.String()
@@ -55,7 +64,7 @@ func (c *Contract) TotalSupply() *big.Int {
 	if totalSupply, ok := BigIntString(c.TotalTokens); ok {
 		return totalSupply
 	}
-	return BigZero
+	return BigNegOne
 }
 
 // TokenOfOwnerByIndex returns the token id for a given index into int token owner's list of tokens.
