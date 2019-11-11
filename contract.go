@@ -9,7 +9,8 @@ var (
 	BigZero = big.NewInt(0)
 	// BigNegOne is a math/big.In with a value of -1.
 	BigNegOne = big.NewInt(-1)
-	bigOne    = big.NewInt(1)
+
+	bigOne = big.NewInt(1)
 )
 
 // Contract is an NFT smart contract implementation that is designed to work with
@@ -48,6 +49,17 @@ func (c *Contract) Mint(to string) {
 	total := c.TotalSupply()
 	if total != BigNegOne {
 		c.addToken(to, total.Add(total, bigOne).String())
+	}
+}
+
+// Burn destroys a token and removes it from its owner.
+func (c *Contract) Burn(tokenID *big.Int) {
+	if c.TokenOwners == nil {
+		return
+	}
+	tid := tokenID.String()
+	if owner, ok := c.TokenOwners[tid]; ok {
+		c.removeToken(owner, tid)
 	}
 }
 
