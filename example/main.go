@@ -23,18 +23,21 @@ func main() {
 		fmt.Fprintf(os.Stderr, "failed to create dragonchain client: %s\n", err)
 		os.Exit(1)
 	}
-	rt := &nft.Runtime{
-		HeapFetcher: &dcheap.HeapFetcher{
-			Client: dcClient,
-		},
-		ContractFactory: &nft.DefaultContractFactory{},
-		RPCHandler:      &rpcHandler{},
-	}
+	rt := runtime(dcClient)
 	rt.Run()
 }
 
 func handleRPC(rpc []byte, contract nft.Contract) {
 	// interpret RPC and handle with contract.
+}
+
+func runtime(dcClient *dragonchain.Client) *nft.Runtime {
+	heapFetcher := &dcheap.HeapFetcher{
+		Client: dcClient,
+	}
+	contractFactory := &nft.DefaultContractFactory{}
+	handler := &rpcHandler{}
+	return nft.NewRuntime(heapFetcher, handler, contractFactory)
 }
 
 func dragonClient() (*dragonchain.Client, error) {

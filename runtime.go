@@ -23,20 +23,29 @@ type ContractFactory interface {
 
 // Runtime is used to run and NFT contract.
 type Runtime struct {
-	HeapFetcher     HeapFetcher
-	RPCHandler      RPCHandler
-	ContractFactory ContractFactory
+	heapFetcher     HeapFetcher
+	rpcHandler      RPCHandler
+	contractFactory ContractFactory
+}
+
+// NewRuntime returns a new Runtime instance.
+func NewRuntime(heapFetcher HeapFetcher, rpcHandler RPCHandler, contractFactory ContractFactory) *Runtime {
+	return &Runtime{
+		heapFetcher:     heapFetcher,
+		rpcHandler:      rpcHandler,
+		contractFactory: contractFactory,
+	}
 }
 
 // Run fetches the contract heap, creates a new contract, and
 // then uses that contract to handle the input RPC.
 func (r *Runtime) Run() {
-	heap, err := r.HeapFetcher.Heap()
+	heap, err := r.heapFetcher.Heap()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to fetch heap: %s", err)
 		os.Exit(1)
 	}
-	contract, err := r.ContractFactory.CreateContract(heap)
+	contract, err := r.contractFactory.CreateContract(heap)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to create contract: %s", err)
 		os.Exit(1)
@@ -46,7 +55,7 @@ func (r *Runtime) Run() {
 		fmt.Fprintf(os.Stderr, "failed to read stdin: %s", err)
 		os.Exit(1)
 	}
-	b, err = r.RPCHandler.HandleRPC(b, contract)
+	b, err = r.rpcHandler.HandleRPC(b, contract)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to handle RPC: %s", err)
 		os.Exit(1)
