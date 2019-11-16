@@ -19,7 +19,7 @@ var (
 type Contract interface {
 	BalanceOf(owner string) uint64
 	OwnerOf(tokenID *big.Int) (string, bool)
-	Mint(to string)
+	Mint(to string) *big.Int
 	Burn(tokenID *big.Int)
 	Transfer(from, to string, tokenID *big.Int)
 	TotalSupply() *big.Int
@@ -59,11 +59,14 @@ func (c *DefaultContract) OwnerOf(tokenID *big.Int) (string, bool) {
 }
 
 // Mint mints a new token and assigns it to the "to" address.
-func (c *DefaultContract) Mint(to string) {
+func (c *DefaultContract) Mint(to string) *big.Int {
 	total := c.TotalSupply()
-	if total != BigNegOne {
-		c.addToken(to, total.Add(total, bigOne).String())
+	if total == BigNegOne {
+		return BigNegOne
 	}
+	tid := total.Add(total, bigOne)
+	c.addToken(to, tid.String())
+	return tid
 }
 
 // Burn destroys a token and removes it from its owner.
