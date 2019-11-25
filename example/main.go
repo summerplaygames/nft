@@ -1,14 +1,8 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
-	"os"
-	
-	"github.com/dragonchain/dragonchain-sdk-go"
+	"encoding/json"
 	"github.com/summerplaygames/nft"
-	dcheap "github.com/summerplaygames/nft/dragonchain"
-	
 )
 
 var (
@@ -20,41 +14,14 @@ var (
 )
 
 func main() {
-	dcClient, err := dragonClient()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to create dragonchain client: %s\n", err)
-		os.Exit(1)
-	}
-	rt := runtime(dcClient)
+	contractFactory := &nft.DefaultContractFactory{}
+	rt := nft.NewRuntime(handleRPC(), contractFactory)
 	rt.Run()
 }
 
-func handleRPC(rpc []byte, contract nft.Contract) {
-	// interpret RPC and handle with contract.
-}
-
-func runtime(dcClient *dragonchain.Client) *nft.Runtime {
-	heapFetcher := &dcheap.HeapFetcher{
-		Client: dcClient,
+func handleRPC() nft.RPCHandlerFunc {
+	return func(rpc []byte, contract nft.Contract) ([]byte, error) {
+		b, err := json.Marshal(contract)
+		return b, err
 	}
-	contractFactory := &nft.DefaultContractFactory{}
-	handler := &rpcHandler{}
-	return nft.NewRuntime(heapFetcher, handler, contractFactory)
-}
-
-func dragonClient() (*dragonchain.Client, error) {
-	httpClient := &http.Client{}
-	creds, err := dragonchain.NewCredentials(dcID, apiKey, apiKeyID, dragonchain.HashSHA256)
-	if err != nil {
-		return nil, err
-	}
-	client := dragonchain.NewClient(creds, baseAPIURL, httpClient)
-	return client, nil
-}
-
-type rpcHandler struct {
-}
-
-func (h *rpcHandler) HandleRPC(rpc []byte, contract nft.Contract) ([]byte, error) {
-	return []byte{}, nil
 }
