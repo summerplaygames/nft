@@ -166,6 +166,20 @@ func (c *DefaultContract) TokensOwnedBy(owner string) ([]string, error) {
 	return nil, ErrNoExist
 }
 
+// GetDragonObject fetches an object with the provided key from the DragonChain smart
+// contract's heap. An error is returned if the object could not be fetched.
+func (c *DefaultContract) GetDragonObject(key string) ([]byte, error) {
+	resp, err := c.client.GetSmartContractObject(key, "")
+	if err != nil {
+		return nil, err
+	}
+	// TODO: Handle not found case.
+	if !resp.OK {
+		return nil, fmt.Errorf("bad status code %d received from DragonChain GetSmartContractObject API request", resp.Status)
+	}
+	return resp.Response.([]byte), nil
+}
+
 func (c *DefaultContract) removeToken(from, tid string) error {
 	if c.TokenOwners == nil {
 		if err := c.fetchTokenOwners(); err != nil {
@@ -238,7 +252,7 @@ func (c *DefaultContract) addToken(to, tid string) error {
 }
 
 func (c *DefaultContract) fetchOwnedTokens() error {
-	resp, err := c.dragonObjRequest("ownedTokens")
+	resp, err := c.GetDragonObject("ownedTokens")
 	if err != nil {
 		return err
 	}
@@ -251,7 +265,7 @@ func (c *DefaultContract) fetchOwnedTokens() error {
 }
 
 func (c *DefaultContract) fetchTokenOwners() error {
-	resp, err := c.dragonObjRequest("tokenOwners")
+	resp, err := c.GetDragonObject("tokenOwners")
 	if err != nil {
 		return err
 	}
@@ -264,7 +278,7 @@ func (c *DefaultContract) fetchTokenOwners() error {
 }
 
 func (c *DefaultContract) fetchOwnedTokenIndices() error {
-	resp, err := c.dragonObjRequest("ownedTokenIndex")
+	resp, err := c.GetDragonObject("ownedTokenIndex")
 	if err != nil {
 		return err
 	}
@@ -277,7 +291,7 @@ func (c *DefaultContract) fetchOwnedTokenIndices() error {
 }
 
 func (c *DefaultContract) fetchTotalSupply() (*big.Int, error) {
-	resp, err := c.dragonObjRequest("totalSupply")
+	resp, err := c.GetDragonObject("totalSupply")
 	if err != nil {
 		return nil, err
 	}
@@ -286,18 +300,6 @@ func (c *DefaultContract) fetchTotalSupply() (*big.Int, error) {
 		return BigZero, nil
 	}
 	return i, err
-}
-
-func (c *DefaultContract) dragonObjRequest(key string) ([]byte, error) {
-	resp, err := c.client.GetSmartContractObject(key, "")
-	if err != nil {
-		return nil, err
-	}
-	// TODO: Handle not found case.
-	if !resp.OK {
-		return nil, fmt.Errorf("bad status code %d received from DragonChain GetSmartContractObject API request", resp.Status)
-	}
-	return resp.Response.([]byte), nil
 }
 
 // BigIntString is a convenience function for creating a big.Int from string. The string is assumed to be
