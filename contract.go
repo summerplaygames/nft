@@ -46,10 +46,10 @@ type Contract interface {
 type DefaultContract struct {
 	Name            string              `json:"name"`
 	Symbol          string              `json:"symbol"`
-	TokenOwners     map[string]string   `json:"tokenOwners"`
-	OwnedTokens     map[string][]string `json:"ownedTokens"`
-	OwnedTokenIndex map[string]uint64   `json:"ownedTokenIndex"`
-	TotalTokens     string              `json:"totalTokens"`
+	TokenOwners     map[string]string   `json:"tokenOwners,omitempty"`
+	OwnedTokens     map[string][]string `json:"ownedTokens,omitempty"`
+	OwnedTokenIndex map[string]uint64   `json:"ownedTokenIndex,omitempty"`
+	TotalTokens     string              `json:"totalTokens,omitempty"`
 
 	client Client
 }
