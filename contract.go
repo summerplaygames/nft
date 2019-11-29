@@ -190,7 +190,7 @@ func (c *DefaultContract) GetDragonObject(key string) ([]byte, error) {
 	}
 	// TODO: Handle not found case.
 	if !resp.OK {
-		return nil, fmt.Errorf("bad status code %d received from DragonChain GetSmartContractObject API request", resp.Status)
+		return nil, fmt.Errorf("bad status code %d received from DragonChain GetSmartContractObject API request: %s", resp.Status, string(resp.Response.([]byte)))
 	}
 	return resp.Response.([]byte), nil
 }
