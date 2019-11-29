@@ -32,6 +32,8 @@ type Client interface {
 
 // Contract is a DCRC1-compatible smart contract.
 type Contract interface {
+	Name() string
+	Symbol() string
 	BalanceOf(owner string) (uint64, error)
 	OwnerOf(tokenID string) (string, error)
 	Mint(to, tokenID string) error
@@ -44,21 +46,34 @@ type Contract interface {
 // DefaultContract is a basic NFT smart contract implementation that is designed to work with
 // the DragonChain platform.
 type DefaultContract struct {
-	Name            string              `json:"name"`
-	Symbol          string              `json:"symbol"`
 	TokenOwners     map[string]string   `json:"tokenOwners,omitempty"`
 	OwnedTokens     map[string][]string `json:"ownedTokens,omitempty"`
 	OwnedTokenIndex map[string]uint64   `json:"ownedTokenIndex,omitempty"`
 	TotalTokens     string              `json:"totalTokens,omitempty"`
 
+	ContractName   string `json:"name"`
+	ContractSymbol string `json:"symbol"`
+
 	client Client
 }
 
 // NewDefaultContract returns a DefaultContract that uses the provided DragonChain client.
-func NewDefaultContract(client Client) *DefaultContract {
+func NewDefaultContract(name, symbol string, client Client) *DefaultContract {
 	return &DefaultContract{
-		client: client,
+		ContractName:   name,
+		ContractSymbol: symbol,
+		client:         client,
 	}
+}
+
+// Name returns the name of the Contract.
+func (c *DefaultContract) Name() string {
+	return c.ContractName
+}
+
+// Symbol returns the Contract's symbol.
+func (c *DefaultContract) Symbol() string {
+	return c.ContractSymbol
 }
 
 // BalanceOf returns the current number of NFTs owned by owner.
@@ -318,12 +333,12 @@ func BigIntString(s string) (*big.Int, error) {
 type DefaultContractFactory struct{}
 
 // CreateContract returns a new DefaultContract.
-func (f *DefaultContractFactory) CreateContract() (Contract, error) {
+func (f *DefaultContractFactory) CreateContract(name, symbol string) (Contract, error) {
 	dcClient, err := dragonClient()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create dragonchain client: %s", err)
 	}
-	return NewDefaultContract(dcClient), nil
+	return NewDefaultContract(name, symbol, dcClient), nil
 }
 
 func dragonClient() (*dragonchain.Client, error) {

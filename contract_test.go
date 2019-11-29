@@ -238,7 +238,7 @@ func TestDefaultContract_BalanceOf(t *testing.T) {
 	for name, test := range balanceTests {
 		t.Run(name, func(t *testing.T) {
 			mockClient := &MockClient{}
-			contract := NewDefaultContract(mockClient)
+			contract := NewDefaultContract("test", "TEST", mockClient)
 			contract.OwnedTokens = test.DefaultState
 			on := test.DCResponse != nil
 			var ret *dragonchain.Response
@@ -266,7 +266,7 @@ func TestDefaultContract_OwnerOf(t *testing.T) {
 	for name, test := range ownerOfTests {
 		t.Run(name, func(t *testing.T) {
 			mockClient := &MockClient{}
-			contract := NewDefaultContract(mockClient)
+			contract := NewDefaultContract("test", "TEST", mockClient)
 			contract.TokenOwners = test.DefaultState
 			on := test.DCResponse != nil
 			var ret *dragonchain.Response
@@ -294,7 +294,7 @@ func TestDefaultContract_Mint(t *testing.T) {
 	for name, test := range mintTests {
 		t.Run(name, func(t *testing.T) {
 			mockClient := &MockClient{}
-			contract := NewDefaultContract(mockClient)
+			contract := NewDefaultContract("test", "TEST", mockClient)
 			contract.TokenOwners = test.TokenOwners
 			contract.OwnedTokens = test.OwnedTokens
 			contract.OwnedTokenIndex = test.TokenIndicies
@@ -316,7 +316,7 @@ func TestDefaultContract_Burn(t *testing.T) {
 	for name, test := range burnTests {
 		t.Run(name, func(t *testing.T) {
 			mockClient := &MockClient{}
-			contract := NewDefaultContract(mockClient)
+			contract := NewDefaultContract("test", "TEST", mockClient)
 			contract.TokenOwners = test.TokenOwners
 			contract.OwnedTokens = test.OwnedTokens
 			contract.OwnedTokenIndex = test.TokenIndicies
@@ -343,7 +343,7 @@ func TestDefaultContract_Transfer(t *testing.T) {
 	for name, test := range transferTests {
 		t.Run(name, func(t *testing.T) {
 			mockClient := &MockClient{}
-			contract := NewDefaultContract(mockClient)
+			contract := NewDefaultContract("test", "TEST", mockClient)
 			contract.TokenOwners = test.TokenOwners
 			contract.OwnedTokens = test.OwnedTokens
 			contract.OwnedTokenIndex = test.TokenIndicies
@@ -372,7 +372,7 @@ func TestDefaultContract_TotalSupply(t *testing.T) {
 	for name, test := range totalSupplyTests {
 		t.Run(name, func(t *testing.T) {
 			mockClient := &MockClient{}
-			contract := NewDefaultContract(mockClient)
+			contract := NewDefaultContract("test", "TEST", mockClient)
 			contract.TotalTokens = test.DefaultState
 			on := test.DCResponse != nil
 			var ret *dragonchain.Response
@@ -400,7 +400,7 @@ func TestDefaultContract_TokensOwnedBy(t *testing.T) {
 	for name, test := range tokensOwnedByTests {
 		t.Run(name, func(t *testing.T) {
 			mockClient := &MockClient{}
-			contract := NewDefaultContract(mockClient)
+			contract := NewDefaultContract("test", "TEST", mockClient)
 			contract.OwnedTokens = test.DefaultState
 			on := test.DCResponse != nil
 			var ret *dragonchain.Response

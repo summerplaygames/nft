@@ -41,7 +41,7 @@ type RPCHandler interface {
 
 // ContractFactory creates a new Contract from some input.
 type ContractFactory interface {
-	CreateContract() (Contract, error)
+	CreateContract(name, symbol string) (Contract, error)
 }
 
 // Runtime is used to run and NFT contract.
@@ -61,7 +61,16 @@ func NewRuntime(rpcHandler RPCHandler, contractFactory ContractFactory) *Runtime
 // Run fetches the contract heap, creates a new contract, and
 // then uses that contract to handle the input RPC.
 func (r *Runtime) Run() {
-	contract, err := r.contractFactory.CreateContract()
+	name, symbol := os.Getenv("CONTRACT_NAME"), os.Getenv("CONTRACT_SYMBOL")
+	if name == "" {
+		fmt.Fprintln(os.Stderr, "no name provided for contract")
+		os.Exit(1)
+	}
+	if symbol == "" {
+		fmt.Fprintln(os.Stderr, "no symbol provided for contract")
+		os.Exit(1)
+	}
+	contract, err := r.contractFactory.CreateContract(name, symbol)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to create contract: %s\n", err)
 		os.Exit(1)
