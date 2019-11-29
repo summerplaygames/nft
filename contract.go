@@ -347,7 +347,7 @@ func dragonClient() (*dragonchain.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	baseAPIURL := os.Getenv("DC_BASE_API_URL")
+	baseAPIURL := os.Getenv("DRAGONCHAIN_ENDPOINT")
 	client := dragonchain.NewClient(creds, baseAPIURL, httpClient)
 	return client, nil
 }
