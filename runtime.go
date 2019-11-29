@@ -76,7 +76,7 @@ func (r *Runtime) Run() {
 		fmt.Fprintf(os.Stderr, "failed to handle RPC: %s\n", err)
 		os.Exit(1)
 	}
-	fmt.Print(b)
+	fmt.Print(string(b))
 }
 
 // Load returns the smart contract heap. An error is returned if the API request fails
