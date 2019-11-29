@@ -97,7 +97,39 @@ func (c *DefaultContract) OwnerOf(tokenID string) (string, error) {
 
 // Mint mints a new token with the provided ID and assigns it to the "to" address.
 func (c *DefaultContract) Mint(to, tokenID string) error {
-	return c.addToken(to, tokenID)
+	if c.TokenOwners == nil {
+		if err := c.fetchTokenOwners(); err != nil {
+			return err
+		}
+	}
+	if c.OwnedTokens == nil {
+		if err := c.fetchOwnedTokens(); err != nil {
+			return err
+		}
+	}
+	if c.OwnedTokenIndex == nil {
+		if err := c.fetchOwnedTokenIndices(); err != nil {
+			return err
+		}
+	}
+	// If the token already exists, we don't want to remint it.
+	if _, ok := c.TokenOwners[tokenID]; ok {
+		return ErrAlreadyExists
+	}
+	totalTokens, err := c.TotalSupply()
+	if err != nil {
+		return err
+	}
+	// add token to "to" address
+	c.TokenOwners[tokenID] = to
+	balance, err := c.BalanceOf(to)
+	if err != nil && err != ErrNoExist {
+		return err
+	}
+	c.OwnedTokens[to] = append(c.OwnedTokens[to], tokenID)
+	c.OwnedTokenIndex[tokenID] = balance
+	c.TotalTokens = totalTokens.Add(totalTokens, bigOne).String()
+	return nil
 }
 
 // Burn destroys a token and removes it from its owner.
@@ -231,42 +263,6 @@ func (c *DefaultContract) removeToken(from, tid string) error {
 	}
 	delete(c.OwnedTokenIndex, tid)
 	c.TotalTokens = totalTokens.Sub(totalTokens, bigOne).String()
-	return nil
-}
-
-func (c *DefaultContract) addToken(to, tid string) error {
-	// If the token ID already exists, we don't want to reuse it.
-	if _, ok := c.TokenOwners[tid]; ok {
-		return ErrAlreadyExists
-	}
-	if c.TokenOwners == nil {
-		if err := c.fetchTokenOwners(); err != nil {
-			return err
-		}
-	}
-	if c.OwnedTokens == nil {
-		if err := c.fetchOwnedTokens(); err != nil {
-			return err
-		}
-	}
-	if c.OwnedTokenIndex == nil {
-		if err := c.fetchOwnedTokenIndices(); err != nil {
-			return err
-		}
-	}
-	totalTokens, err := c.TotalSupply()
-	if err != nil {
-		return err
-	}
-	// add token to "to" address
-	c.TokenOwners[tid] = to
-	balance, err := c.BalanceOf(to)
-	if err != nil && err != ErrNoExist {
-		return err
-	}
-	c.OwnedTokens[to] = append(c.OwnedTokens[to], tid)
-	c.OwnedTokenIndex[tid] = balance
-	c.TotalTokens = totalTokens.Add(totalTokens, bigOne).String()
 	return nil
 }
 

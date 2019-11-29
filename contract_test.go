@@ -108,6 +108,15 @@ var (
 			To:            "owner2",
 			TokenID:       "tokenID2",
 		},
+		"token already exists": {
+			TokenOwners:   map[string]string{"tokenID": "owner"},
+			OwnedTokens:   map[string][]string{"owner": {"tokenID"}},
+			TokenIndicies: map[string]uint64{"tokenID": 0},
+			TotalSupply:   bigOne,
+			To:            "owner",
+			TokenID:       "tokenID",
+			ExpectedError: ErrAlreadyExists,
+		},
 	}
 
 	burnTests = map[string]struct {
@@ -300,7 +309,7 @@ func TestDefaultContract_Mint(t *testing.T) {
 			contract.OwnedTokenIndex = test.TokenIndicies
 			contract.TotalTokens = test.TotalSupply.String()
 			err := contract.Mint(test.To, test.TokenID)
-			assert.NoError(t, err)
+			assert.Equal(t, test.ExpectedError, err)
 			assert.Len(t, contract.TokenOwners, 1)
 			assert.Len(t, contract.OwnedTokens, 1)
 			assert.Len(t, contract.OwnedTokenIndex, 1)
