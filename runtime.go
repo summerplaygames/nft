@@ -63,17 +63,17 @@ func NewRuntime(rpcHandler RPCHandler, contractFactory ContractFactory) *Runtime
 func (r *Runtime) Run() {
 	contract, err := r.contractFactory.CreateContract()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to create contract: %s", err)
+		fmt.Fprintf(os.Stderr, "failed to create contract: %s\n", err)
 		os.Exit(1)
 	}
 	b, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to read stdin: %s", err)
+		fmt.Fprintf(os.Stderr, "failed to read stdin: %s\n", err)
 		os.Exit(1)
 	}
 	b, err = r.rpcHandler.HandleRPC(b, contract)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to handle RPC: %s", err)
+		fmt.Fprintf(os.Stderr, "failed to handle RPC: %s\n", err)
 		os.Exit(1)
 	}
 	fmt.Print(b)
