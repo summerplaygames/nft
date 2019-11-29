@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"github.com/summerplaygames/nft"
 )
 
@@ -20,8 +19,7 @@ func main() {
 }
 
 func handleRPC() nft.RPCHandlerFunc {
-	return func(rpc []byte, contract nft.Contract) ([]byte, error) {
-		b, err := json.Marshal(contract)
-		return b, err
+	return func(rpc []byte, contract nft.Contract) (interface{}, error) {
+		return contract, nil
 	}
 }
