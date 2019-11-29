@@ -160,12 +160,13 @@ func (c *DefaultContract) TotalSupply() (*big.Int, error) {
 	if totalSupply, err := BigIntString(c.TotalTokens); err == nil {
 		return totalSupply, nil
 	}
-	totalSupply, err := c.fetchTotalSupply()
-	if err != nil {
+	if err := c.fetchTotalSupply(); err != nil {
 		return BigZero, err
 	}
-	c.TotalTokens = totalSupply.String()
-	return totalSupply, nil
+	if c.TotalTokens == "" {
+		return BigZero, nil
+	}
+	return BigIntString(c.TotalTokens)
 }
 
 // TokensOwnedBy returns the list of token ids owned by owner.
@@ -190,6 +191,9 @@ func (c *DefaultContract) GetDragonObject(key string) ([]byte, error) {
 	}
 	// TODO: Handle not found case.
 	if !resp.OK {
+		if resp.Status == http.StatusNotFound {
+			return []byte{}, nil
+		}
 		return nil, fmt.Errorf("bad status code %d received from DragonChain GetSmartContractObject API request: %s", resp.Status, string(resp.Response.([]byte)))
 	}
 	return resp.Response.([]byte), nil
@@ -271,6 +275,10 @@ func (c *DefaultContract) fetchOwnedTokens() error {
 	if err != nil {
 		return err
 	}
+	if len(resp) == 0 {
+		c.OwnedTokens = make(map[string][]string)
+		return nil
+	}
 	var m map[string][]string
 	if err = json.Unmarshal(resp, &m); err != nil {
 		return err
@@ -283,6 +291,10 @@ func (c *DefaultContract) fetchTokenOwners() error {
 	resp, err := c.GetDragonObject("tokenOwners")
 	if err != nil {
 		return err
+	}
+	if len(resp) == 0 {
+		c.TokenOwners = make(map[string]string)
+		return nil
 	}
 	var m map[string]string
 	if err = json.Unmarshal(resp, &m); err != nil {
@@ -297,6 +309,10 @@ func (c *DefaultContract) fetchOwnedTokenIndices() error {
 	if err != nil {
 		return err
 	}
+	if len(resp) == 0 {
+		c.OwnedTokenIndex = make(map[string]uint64)
+		return nil
+	}
 	var m map[string]uint64
 	if err = json.Unmarshal(resp, &m); err != nil {
 		return err
@@ -305,16 +321,15 @@ func (c *DefaultContract) fetchOwnedTokenIndices() error {
 	return nil
 }
 
-func (c *DefaultContract) fetchTotalSupply() (*big.Int, error) {
+func (c *DefaultContract) fetchTotalSupply() error {
 	resp, err := c.GetDragonObject("totalSupply")
 	if err != nil {
-		return nil, err
+		return err
 	}
-	i, err := BigIntString(string(resp))
-	if err == ErrInvalidBigIntString {
-		return BigZero, nil
+	if len(resp) != 0 {
+		c.TotalTokens = string(resp)
 	}
-	return i, err
+	return nil
 }
 
 // BigIntString is a convenience function for creating a big.Int from string. The string is assumed to be
